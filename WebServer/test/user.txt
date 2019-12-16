@@ -1,0 +1,25 @@
+id              主键
+
+username        用户名(str)
+passwd          密码(str)
+uuid            加密标识(str)
+check           校验值(str)
+creat_time      创建时间(datetime)
+login_time      登陆时间(datetime)
+login_ip        登陆IP(str)
+login_count     登录计数
+login_key       密钥
+
+rights_groups   权限组
+
+identity_type   第三方登录凭证(str)
+
+phone           手机(str)
+e-mail          email(str)
+nickname        昵称
+age             年龄
+avatar_img      头像(path)
+
+del_flag        删除标记
+test_flag       测试标记
+

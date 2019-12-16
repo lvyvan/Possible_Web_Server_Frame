@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Login</title>
+    <style>
+        #errormsg{
+            display: none;
+            color: red;
+        }
+        #vecode{
+            height: 22px;
+            padding-top: 5px;
+        }
+    </style>
+    <script src="/js/jquery-1.12.4.min.js"></script>
+    <script>
+        $(function(){
+            $('#btnlogin').click(function (params) {
+                $('#errormsg').show().html('正在验证，请稍后... ')
+                username = $('#username').val()
+                password = $('#password').val()
+                checkvalue = $('#checkvalue').val()
+                if ($('input:checkbox:checked').val() == 'on'){
+                    automatic_login = 'ok'
+                }else{
+                    automatic_login = 'no'
+                }
+                $.post('/login_check', {//logincheck
+                    'username': username,
+                    'password': password,
+                    'checkvalue': checkvalue,
+                    'automatic_login': automatic_login
+                }, function (data) {
+                    if (data== '-1'){
+                        $('#errormsg').show().html('X 验证码错误')
+                        $('#vecode').attr("src","/getverification_code?id=" + Math.random());
+                    }
+                    else if(data== '0') {
+                        $('#errormsg').show().html('X 用户名或密码错误')
+                        $('#vecode').attr("src","/getverification_code?id=" + Math.random());
+                    }else if (data == '1'){
+                        $('#errormsg').show().html(data)
+                        //location.href = '/index'
+                    }else{
+                        $('#errormsg').show().html('X 异常')
+                    }
+                })
+            })
+
+            $('#vecode').click(function () {
+                $('#vecode').attr("src","/getverification_code?id=" + Math.random());
+            })
+        })
+    </script>
+</head>
+<body>
+    <div>
+        <table>
+            <tr>
+                <td><span > 用户名：</span></td>
+                <td> <input type="text" id='username'></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><span> 密 码 ：</span></td>
+                <td><input type="text" id='password'></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><span> 验证码 ：</span></td>
+                <td><input type="text" id='checkvalue'></td>
+                <td><img src="/getverification_code?id=1" id='vecode'></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input type="checkbox" id="automatic_login" name="auto_login"><span> 自动登陆 </span></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input type="button" id="btnlogin" value=" 登陆 "></td>
+                <td><div id="errormsg"></div></td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

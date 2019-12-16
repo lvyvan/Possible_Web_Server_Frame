@@ -1,0 +1,259 @@
+'''
+    1. 全文撤销HttpCode 配置文件， 改用http.HTTPStatus枚举类型
+        https://docs.python.org/3/library/http.html#module-http
+    2. 重写请求响应对象，进程内唯一对象使用Context
+    3. 支持ORM,使用封装SQLAlchemy
+    4. 修改Content-Type ，尽可能封装为 Enum
+        https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
+    5. 重写WSGI,使用Python库实现
+        https://docs.python.org/3/library/wsgiref.html#module-wsgiref
+    6. 重写对请求的判断
+    7. 重写对POST支持，支持键值对，JSON
+    8. 对上传文件进行支持，未研究，待支持
+    9. 实现对HTML的封装，解决模板支持问题
+
+    A. 阅读 https://developer.mozilla.org/zh-CN/docs/Web/HTTP
+
+'''
+Firefox
+
+GET / HTTP/1.1
+Host: 127.0.0.1:8080
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+Pragma: no-cache
+Cache-Control: no-cache
+
+GET+/+HTTP/1.1
+{
+-# 'Host': '127.0.0.1:8080', 
+'Connection': 'keep-alive',     标记列表
+'Cache-Control': 'max-age=0',   传出对象的缓存信息
+-# 'Upgrade-Insecure-Requests': '1',
+-# 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36',
+'DNT': '1', # 表示用户是否愿意被追踪
+#'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+#'Accept-Encoding': 'gzip, deflate, br', 
+#'Accept-Language': 'zh-CN,zh-TW;q=0.9,zh;q=0.8,en-US;q=0.7,en;q=0.6', q 内容协商质量值 -> p 417
+#'Cookie': 'csrftoken=iViBHLrWNYkh1cO05CxJU5q1hzy7T2zHlgdZFdsgMffGew29hP0Xft8iep7csQOf; sessionid=vl8dfe91zg0fgctltzjwgma75hgpeunh'
+}
+
+GET+/+HTTP/1.1
+{
+-# 'Host': '127.0.0.1:8080', 
+-# 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0', 
+-# 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 
+-# 'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2', 
+-# 'Accept-Encoding': 'gzip, deflate', 'Connection': 'keep-alive', 
+-# 'Upgrade-Insecure-Requests': '1', 
+'Pragma': 'no-cache',   缓存控制
+'Cache-Control': 'no-cache' 传输对象的缓存信息
+}
+
+HTTP/1.1 200 OK
+Expires: Sun, 17 Feb 2019 14:20:12 GMT
+Date: Sun, 17 Feb 2019 14:18:12 GMT
+Content-Type: text/html; charset=utf-8
+Transfer-Encoding: chunked
+Last-Modified: Sun, 17 Feb 2019 14:16:01 GMT
+Cache-Control: max-age=120
+X-Cacheable: MI-WWW-Cacheable
+Server: MIFE/3.0
+X-Frame-Options: SAMEORIGIN
+Content-Encoding: gzip
+Cache_state: 0
+Cache_state: 0
+Age: 21
+X-Via: 1.1 PShnaywtzx148:4 (Cdn Cache Server V2.0), 1.1 PShnlywt4jo201:4 (Cdn Cache Server V2.0)
+Connection: keep-alive
+
+---------------------------------------------------------------------------------------------------------
+
+Host: order.mi.com
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2
+Accept-Encoding: gzip, deflate, br
+Referer: https://lg.lp.account.xiaomi.com/static/res/2cf694c/account-static/html/login/dist/qrlogin/passlp-cn.html?callback=https%3A%2F%2Forder.mi.com%2Flogin%2Fcallback%3Ffollowup%3Dhttps%253A%252F%252Fwww.mi.com%252F%26sign%3DNzY3MDk1YzczNmUwMGM4ODAxOWE0NjRiNTU5ZGQyMzFhYjFmOGU0Nw%2C%2C&sid=mi_eshop&_bannerBiz=mistore&_qrsize=180&_qrsize=180&_=1551196009298
+Connection: keep-alive
+Cookie: xmuuid=XMGUEST-B1E102D0-30DD-11E9-80D4-5F77384BA9CE; 
+    mstuid=1550206434658_313; XM_agreement=1; pageid=ba30dc918f1e51a9; 
+    mstz=||973409272.13||https%253A%252F%252Faccount.xiaomi.com%252Fpass%252Fservicelogin%253Fcallback%253Dhttps%25253a%25252f%25252forder.mi.com%25252flogin%25252fcallback%25253ffollowup%25253dhttps%2525253a%2525252f%2525252fwww.mi.com%2525252f%252526sign%25253dnzy3mdk1yzcznmuwmgm4odaxowe0njrintu5zgqymzfhyjfmogu0nw%25252c%25252c%257Csid%253Dmi_eshop%257C_bannerbiz%253Dmistore%257C_qrsize%253D180|https%25253A%25252F%25252Faccount.xiaomi.com%25252Fpass%25252Fservicelogin%25253Fcallback%25253Dhttps%2525253a%2525252f%2525252forder.mi.com%2525252flogin%2525252fcallback%2525253ffollowup%2525253dhttps%252525253a%252525252f%252525252fwww.mi.com%252525252f%25252526sign%2525253dnzy3mdk1yzcznmuwmgm4odaxowe0njrintu5zgqymzfhyjfmogu0nw%2525252c%2525252c%25257Csid%25253Dmi_eshop%25257C_bannerbiz%25253Dmistore%25257C_qrsize%25253D180; 
+    xm_vistor=1550206434658_313_1551195875870-1551196002657; 
+    msttime=https%3A%2F%2Fs1.mi.com%2Floginbanner.html; 
+    log_code=81190ccc4d52f577-2f616d176624bee4|https%3A%2F%2Fwww.mi.com%2F;
+    XM_agreement_sure=1; lastsource=account.xiaomi.com; 
+msttime1=https%3A%2F%2Fs1.mi.com%2Floginbanner.html
+Upgrade-Insecure-Requests: 1
+Pragma: no-cache
+Cache-Control: no-cache
+
+undefined undefined undefined
+Server: MIWS
+Date: Tue, 26 Feb 2019 15:47:26 GMT
+Content-Type: text/html; charset=UTF-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Custom-Status: 0
+
+    Set-Cookie: userId=921576846; path=/; domain=.mi.com
+    Set-Cookie: cUserId=0FvfDCCIc83R0ABmQicO7jmyI1w; path=/; domain=.mi.com
+    Set-Cookie: xm_order_btauth=c247d4899c71eebc3b0657b0ee2aa41f; path=/; domain=.mi.com
+    Set-Cookie: xm_link_history=DiMdvSTuQjb38NTOeKw6T3MA7LrfPtSiEqXZi%2BcIInk%3D; path=/; domain=.mi.com
+    Set-Cookie: euid=3Z2d0HnGzsC7sDhTsX0v2g%3D%3D; path=/; domain=.mi.com
+    Set-Cookie: mUserId=OMe4lN3a2Rya6%2BcmAwVki3fnd6p7Kmd0OD5NtmgpN9M%3D; path=/; domain=.mi.com
+    Set-Cookie: axmuid=OMe4lN3a2Rya6%2BcmAwVki3fnd6p7Kmd0OD5NtmgpN9M%3D; expires=Thu, 28-Mar-2019 15:47:26 GMT; Max-Age=2592000; path=/; domain=.mi.com
+    Set-Cookie: serviceToken=imTYHCerS%2FcLTwy%2FNu3lsAOGZnhpdBegYRmnmAoqaAKWGEAhpzVZGwj9hQkoB9%2B7Vta1j5grPQhF6uYGAH9Mn5xMrTa2leQSrcQY6%2BmaI%2FudTLo%2BPq6rANX3YLCKuBhglTMT%2B3XQvCcK6nWlaGOuwAw4ZTECpTtVAySSu2JBYi8%3D; path=/; domain=order.mi.com; HttpOnly
+    Set-Cookie: xm_user_www_num=0; path=/; domain=mi.com
+
+Location: https://www.mi.com/
+
+----------------------------------------------------------------------------------------------------------
+
+Host: www.mi.com
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2
+Accept-Encoding: gzip, deflate, br
+Referer: https://lg.lp.account.xiaomi.com/static/res/2cf694c/account-static/html/login/dist/qrlogin/passlp-cn.html?callback=https%3A%2F%2Forder.mi.com%2Flogin%2Fcallback%3Ffollowup%3Dhttps%253A%252F%252Fwww.mi.com%252F%26sign%3DNzY3MDk1YzczNmUwMGM4ODAxOWE0NjRiNTU5ZGQyMzFhYjFmOGU0Nw%2C%2C&sid=mi_eshop&_bannerBiz=mistore&_qrsize=180&_qrsize=180&_=1551196009298
+Connection: keep-alive
+
+Cookie: xmuuid=XMGUEST-B1E102D0-30DD-11E9-80D4-5F77384BA9CE; 
+    mstuid=1550206434658_313; 
+    XM_agreement=0; 
+    pageid=81190ccc4d52f577; 
+    mstz=||973409272.16||https%253A%252F%252Flg.lp.account.xiaomi.com%252Fstatic%252Fres%252F2cf694c%252Faccount-static%252Fhtml%252Flogin%252Fdist%252Fqrlogin%252Fpasslp-cn.html%253Fcallback%253Dhttps%25253a%25252f%25252forder.mi.com%25252flogin%25252fcallback%25253ffollowup%25253dhttps%2525253a%2525252f%2525252fwww.mi.com%2525252f%252526sign%25253dnzy3mdk1yzcznmuwmgm4odaxowe0njrintu5zgqymzfhyjfmogu0nw%25252c%25252c%257Csid%253Dmi_eshop%257C_bannerbiz%253Dmistore%257C_qrsize%253D180%257C_qrsize%253D180%257C_%253D1551196009298|https%25253A%25252F%25252Flg.lp.account.xiaomi.com%25252Fstatic%25252Fres%25252F2cf694c%25252Faccount-static%25252Fhtml%25252Flogin%25252Fdist%25252Fqrlogin%25252Fpasslp-cn.html%25253Fcallback%25253Dhttps%2525253a%2525252f%2525252forder.mi.com%2525252flogin%2525252fcallback%2525253ffollowup%2525253dhttps%252525253a%252525252f%252525252fwww.mi.com%252525252f%25252526sign%2525253dnzy3mdk1yzcznmuwmgm4odaxowe0njrintu5zgqymzfhyjfmogu0nw%2525252c%2525252c%25257Csid%25253Dmi_eshop%25257C_bannerbiz%25253Dmistore%25257C_qrsize%25253D180%25257C_qrsize%25253D180%25257C_%25253D1551196009298; 
+    xm_vistor=1550206434658_313_1551195875870-1551196050519; 
+    msttime=https%3A%2F%2Fwww.mi.com%2F; 
+    log_code=81190ccc4d52f577-2f616d176624bee4|https%3A%2F%2Fwww.mi.com%2F; 
+    XM_agreement_sure=1; 
+    lastsource=lg.lp.account.xiaomi.com; 
+    xm_order_btauth=c247d4899c71eebc3b0657b0ee2aa41f; 
+    xm_link_history=DiMdvSTuQjb38NTOeKw6T3MA7LrfPtSiEqXZi%2BcIInk%3D; 
+    euid=3Z2d0HnGzsC7sDhTsX0v2g%3D%3D; 
+    axmuid=OMe4lN3a2Rya6%2BcmAwVki3fnd6p7Kmd0OD5NtmgpN9M%3D; 
+    xm_user_www_num=0; XM_921576846_UN=%E7%AB%A0%E8%B0%85; 
+    cUserId=0FvfDCCIc83R0ABmQicO7jmyI1w; 
+    mUserId=OMe4lN3a2Rya6%2BcmAwVki9pxVE6NSNwrfu4rWxE%2FR5o%3D
+
+Upgrade-Insecure-Requests: 1
+Pragma: no-cache
+Cache-Control: no-cache
+
+HTTP/1.1 200 OK
+Expires: Tue, 26 Feb 2019 15:51:01 GMT
+Date: Tue, 26 Feb 2019 15:49:01 GMT
+Content-Type: text/html; charset=utf-8
+Transfer-Encoding: chunked
+Last-Modified: Tue, 26 Feb 2019 15:46:01 GMT
+Cache-Control: max-age=120
+X-Cacheable: MI-WWW-Cacheable
+Server: MIFE/3.0
+X-Frame-Options: SAMEORIGIN
+Content-Encoding: gzip
+Cache_state: 0
+Cache_state: 2
+X-Via: 1.1 PShnaywtzx148:4 (Cdn Cache Server V2.0), 1.1 PShnlhwt4of216:8 (Cdn Cache Server V2.0)
+Connection: keep-alive
+
+----------------------------------------------------------------------------------
+
+>>> import Cookie
+>>> C = Cookie.SimpleCookie()
+>>> C["fig"] = "newton"
+>>> C["sugar"] = "wafer"
+>>> print C # generate HTTP headers
+Set-Cookie: fig=newton
+Set-Cookie: sugar=wafer
+>>> print C.output() # same thing
+Set-Cookie: fig=newton
+Set-Cookie: sugar=wafer
+>>> C = Cookie.SimpleCookie()
+>>> C["rocky"] = "road"
+>>> C["rocky"]["path"] = "/cookie"
+>>> print C.output(header="Cookie:")
+Cookie: rocky=road; Path=/cookie
+>>> print C.output(attrs=[], header="Cookie:")
+Cookie: rocky=road
+
+
+>>> C = Cookie.SimpleCookie()
+>>> C.load("chips=ahoy; vienna=finger") # load from a string (HTTP header)
+>>> print C
+Set-Cookie: chips=ahoy
+Set-Cookie: vienna=finger
+
+>>> C = Cookie.SimpleCookie()
+>>> C.load('keebler="E=everybody; L=\\"Loves\\"; fudge=\\012;";')
+>>> print C
+Set-Cookie: keebler="E=everybody; L=\"Loves\"; fudge=\012;"
+
+>>> C = Cookie.SimpleCookie()
+>>> C["oreo"] = "doublestuff"
+>>> C["oreo"]["path"] = "/"
+>>> print C
+Set-Cookie: oreo=doublestuff; Path=/
+>>> C["twix"] = "none for you"
+>>> C["twix"].value
+'none for you'
+
+>>> C = Cookie.SimpleCookie()
+>>> C["number"] = 7             # equivalent to C["number"] = str(7)
+>>> C["string"] = "seven"
+>>> C["number"].value
+'7'
+>>> C["string"].value
+'seven'
+>>> print C
+Set-Cookie: number=7
+Set-Cookie: string=seven
+
+>>> # SerialCookie and SmartCookie are deprecated
+>>> # using it can cause security loopholes in your code.
+>>> C = Cookie.SerialCookie()
+>>> C["number"] = 7
+>>> C["string"] = "seven"
+>>> C["number"].value
+7
+>>> C["string"].value
+'seven'
+>>> print C
+Set-Cookie: number="I7\012."
+Set-Cookie: string="S'seven'\012p1\012."
+>>> C = Cookie.SmartCookie()
+>>> C["number"] = 7
+>>> C["string"] = "seven"
+>>> C["number"].value
+7
+>>> C["string"].value
+'seven'
+>>> print C
+Set-Cookie: number="I7\012."
+Set-Cookie: string=seven
+
+expires         #   日期字符串 指定过期时间
+path            #   匹配路径
+comment         #   给服务器说明如何使用该Cookie UTF-8
+domain          #   服务器只向指定的域名发送Cookie
+max-age         #   指定过期秒数
+secure          #   如果使用该属性，则只有在 Http SSL 安全连接时发送
+version         #   强制，对应Cookie版本 但没见人用过 :D
+httponly        #   cookie中设置了HttpOnly属性，那么通过js脚本将无法读取到cookie信息，这样能有效的防止XSS攻击
+
+>>> from http import cookies
+>>> c = cookies.SimpleCookie()
+>>> c["supar"] = "netWork"
+>>> c["supar"]["path"] = "/"
+>>> c.output()
+'Set-Cookie: supar=netWork; Path=/'
+>>> c["supar"]["max-age"] = "360"
+>>> c.output()
+'Set-Cookie: supar=netWork; Max-Age=360; Path=/'
+>>> c["supar"]["domain"] = "yvan.top"
+>>> c.output()
+'Set-Cookie: supar=netWork; Domain=yvan.top; Max-Age=360; Path=/'
+>>>
